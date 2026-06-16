@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %} — Settings{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+
+<div class="section">
+    <h2>Gmail Connection</h2>
+    {% if gmail and gmail.status == 'connected' %}
+        <div class="alert alert-success">
+            Connected as <strong>{{ gmail.google_email }}</strong>
+            (connected {{ gmail.connected_at.strftime('%Y-%m-%d %H:%M') }})
+        </div>
+        <button class="btn btn-danger" onclick="disconnectGmail()">Disconnect Gmail</button>
+    {% else %}
+        <div class="alert alert-warning">Not connected to Gmail.</div>
+        <button class="btn btn-primary" onclick="connectGmail()">Connect Gmail</button>
+    {% endif %}
+    <div id="gmail-status"></div>
+</div>
+
+<div class="section">
+    <h2>Report Settings</h2>
+    <form id="settings-form">
+        <div class="form-group">
+            <label>Admin / Report Recipient Email</label>
+            <input type="email" name="recipient_email" value="{{ settings.recipient_email or '' }}" placeholder="admin@example.com">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Daily Report Time</label>
+                <input type="time" name="report_time" value="{{ settings.report_time or '08:00' }}">
+            </div>
+            <div class="form-group">
+                <label>Timezone</label>
+                <select name="timezone">
+                    <option value="Asia/Karachi" {% if settings.timezone == 'Asia/Karachi' %}selected{% endif %}>Asia/Karachi</option>
+                    <option value="UTC" {% if settings.timezone == 'UTC' %}selected{% endif %}>UTC</option>
+                    <option value="US/Eastern" {% if settings.timezone == 'US/Eastern' %}selected{% endif %}>US/Eastern</option>
+                    <option value="US/Pacific" {% if settings.timezone == 'US/Pacific' %}selected{% endif %}>US/Pacific</option>
+                    <option value="Europe/London" {% if settings.timezone == 'Europe/London' %}selected{% endif %}>Europe/London</option>
+                    <option value="Asia/Dubai" {% if settings.timezone == 'Asia/Dubai' %}selected{% endif %}>Asia/Dubai</option>
+                    <option value="Asia/Kolkata" {% if settings.timezone == 'Asia/Kolkata' %}selected{% endif %}>Asia/Kolkata</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Email Filter Type</label>
+            <select name="email_filter_type">
+                <option value="today_all" {% if settings.email_filter_type == 'today_all' %}selected{% endif %}>Today - All</option>
+                <option value="today_unread" {% if settings.email_filter_type == 'today_unread' %}selected{% endif %}>Today - Unread</option>
+                <option value="today_read" {% if settings.email_filter_type == 'today_read' %}selected{% endif %}>Today - Read</option>
+                <option value="important" {% if settings.email_filter_type == 'important' %}selected{% endif %}>Important</option>
+                <option value="starred" {% if settings.email_filter_type == 'starred' %}selected{% endif %}>Starred</option>
+                <option value="custom_query" {% if settings.email_filter_type == 'custom_query' %}selected{% endif %}>Custom Query</option>
+            </select>
+        </div>
+        <div class="form-group" id="custom-query-group" style="display: {{ 'block' if settings.email_filter_type == 'custom_query' else 'none' }}">
+            <label>Custom Gmail Query</label>
+            <input type="text" name="custom_query" value="{{ settings.custom_query or '' }}" placeholder="e.g., after:2024/01/01 from:example@.com">
+        </div>
+        <div class="form-group">
+            <label>Max Emails Per Run</label>
+            <input type="number" name="max_emails" value="{{ settings.max_emails or 50 }}" min="1" max="500">
+        </div>
+        <h3>AI Provider</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label>AI Provider</label>
+                <select name="ai_provider">
+                    <option value="nvidia" {% if settings.ai_provider == 'nvidia' %}selected{% endif %}>NVIDIA AI</option>
+                    <option value="openrouter" {% if settings.ai_provider == 'openrouter' %}selected{% endif %}>OpenRouter</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>AI Model Name</label>
+                <input type="text" name="ai_model" value="{{ settings.ai_model or '' }}" placeholder="e.g., meta/llama-3.1-405b-instruct">
+            </div>
+        </div>
+        <h3>Features</h3>
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" name="include_suggested_replies" {% if settings.include_suggested_replies %}checked{% endif %}>
+                Enable Suggested Replies
+            </label>
+        </div>
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" name="include_meeting_detection" {% if settings.include_meeting_detection %}checked{% endif %}>
+                Enable Meeting Detection
+            </label>
+        </div>
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" name="allow_override" {% if settings.allow_override %}checked{% endif %}>
+                Allow Override — bypass duplicate report check for re-runs
+            </label>
+        </div>
+        <h3>Notifications</h3>
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" name="send_success_report" {% if settings.send_success_report %}checked{% endif %}>
+                Send Report Email on Success
+            </label>
+        </div>
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" name="send_failure_report" {% if settings.send_failure_report %}checked{% endif %}>
+                Send Report Email on Failure
+            </label>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+    </form>
+    <div id="settings-status"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelector('select[name="email_filter_type"]').addEventListener('change', function() {
+    document.getElementById('custom-query-group').style.display = this.value === 'custom_query' ? 'block' : 'none';
+});
+
+document.getElementById('settings-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const data = {};
+    new FormData(form).forEach((value, key) => {
+        if (key === 'include_suggested_replies' || key === 'include_meeting_detection' || key === 'send_success_report' || key === 'send_failure_report' || key === 'allow_override') {
+            data[key] = form.querySelector(`[name="${key}"]`).checked;
+        } else if (key === 'max_emails') {
+            data[key] = parseInt(value);
+        } else {
+            data[key] = value;
+        }
+    });
+    const statusDiv = document.getElementById('settings-status');
+    statusDiv.innerHTML = '<div class="alert alert-info">Saving...</div>';
+    try {
+        const result = await apiFetch('/api/settings', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+        if (result.success) {
+            statusDiv.innerHTML = '<div class="alert alert-success">Settings saved successfully!</div>';
+        }
+    } catch (err) {
+        statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+    }
+});
+
+async function connectGmail() {
+    try {
+        const result = await apiFetch('/api/gmail/connect');
+        if (result.auth_url) {
+            window.location.href = result.auth_url;
+        }
+    } catch (err) {
+        document.getElementById('gmail-status').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+    }
+}
+
+async function disconnectGmail() {
+    if (!confirm('Disconnect Gmail?')) return;
+    await apiFetch('/api/gmail/disconnect', { method: 'POST' });
+    location.reload();
+}
+</script>
+{% endblock %}

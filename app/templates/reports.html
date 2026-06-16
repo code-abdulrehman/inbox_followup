@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %} — Reports{% endblock %}
+{% block content %}
+<h1>Reports</h1>
+<div class="section">
+    <button class="btn btn-primary" onclick="runReport()">🔄 Run Manual Report</button>
+    <div id="run-status"></div>
+</div>
+<div class="section">
+    {% if reports %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Emails</th>
+                <th>High Priority</th>
+                <th>Need Reply</th>
+                <th>Meetings</th>
+                <th>Sent</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for report in reports %}
+            <tr>
+                <td>{{ report.run_date }}</td>
+                <td>
+                    <span class="badge {% if report.status == 'success' %}badge-success{% elif report.status == 'failed' %}badge-danger{% elif report.status == 'running' %}badge-info{% else %}badge-warning{% endif %}">
+                        {{ report.status.replace('_', ' ').title() }}
+                    </span>
+                </td>
+                <td>{{ report.emails_checked }}</td>
+                <td>{{ report.high_priority_count }}</td>
+                <td>{{ report.needs_reply_count }}</td>
+                <td>{{ report.meeting_count }}</td>
+                <td>{% if report.report_sent %}✅{% else %}❌{% endif %}</td>
+                <td><a href="/reports/{{ report.id }}" class="btn btn-sm">View</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="alert alert-info">No reports yet. Run a manual report to get started.</div>
+    {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function runReport() {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Running...';
+    const statusDiv = document.getElementById('run-status');
+    statusDiv.innerHTML = '<div class="alert alert-info">Report generation started...</div>';
+    try {
+        const result = await apiFetch('/api/reports/run-now', { method: 'POST' });
+        if (result.status === 'skipped') {
+            statusDiv.innerHTML = `<div class="alert alert-warning">${result.message}</div>`;
+        } else {
+            statusDiv.innerHTML = `<div class="alert alert-success">Status: ${result.status.replace('_', ' ').toUpperCase()} | Emails: ${result.emails_checked}</div>`;
+            setTimeout(() => location.reload(), 1500);
+        }
+    } catch (err) {
+        statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+    }
+    btn.disabled = false;
+    btn.textContent = '🔄 Run Manual Report';
+}
+</script>
+{% endblock %}
