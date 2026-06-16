@@ -1,38 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inbox FollowUp{% block title %}{% endblock %}</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inbox FollowUp{% block title %}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/global.css?v=2">
+  <script>
+    (function(){
+      var theme = localStorage.getItem('inbox-followup-theme');
+      if (!theme) theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+  <script src="/static/js/theme.js" defer></script>
+  <script src="/static/js/toast.js" defer></script>
+  <script src="/static/js/run-report.js" defer></script>
 </head>
 <body>
-    <nav class="nav">
-        <div class="nav-inner">
-            <a href="/" class="nav-brand">Inbox FollowUp</a>
-            <div class="nav-links">
-                <a href="/">Dashboard</a>
-                <a href="/settings">Settings</a>
-                <a href="/reports">Reports</a>
-            </div>
-        </div>
-    </nav>
-    <main class="container">
-        {% block content %}{% endblock %}
-    </main>
-    <script>
-        async function apiFetch(url, options = {}) {
-            const resp = await fetch(url, {
-                headers: { 'Content-Type': 'application/json', ...options.headers },
-                ...options,
-            });
-            const data = await resp.json();
-            if (!resp.ok) {
-                throw new Error(data.detail || `HTTP ${resp.status}`);
-            }
-            return data;
-        }
-    </script>
-    {% block scripts %}{% endblock %}
+  {% include "partials/navbar.html" %}
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  <script>
+    async function apiFetch(url, options = {}) {
+      const resp = await fetch(url, {
+        headers: { 'Content-Type': 'application/json', ...options.headers },
+        ...options,
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        throw new Error(data.detail || `HTTP ${resp.status}`);
+      }
+      return data;
+    }
+  </script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

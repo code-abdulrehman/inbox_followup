@@ -4,149 +4,174 @@
 <h1>Dashboard</h1>
 
 <div class="cards-grid">
-    <div class="card">
-        <div class="card-icon">📧</div>
-        <div class="card-label">Gmail Connection</div>
-        <div class="card-value">
-            {% if gmail_connected %}
-                <span class="badge badge-success">Connected</span>
-                <small>{{ google_email }}</small>
-            {% else %}
-                <span class="badge badge-danger">Not Connected</span>
-                <a href="/settings" class="btn btn-sm">Connect</a>
-            {% endif %}
-        </div>
+  <div class="card">
+    <div class="card-icon">📧</div>
+    <div class="card-label">Gmail Connection</div>
+    <div class="card-value">
+      {% if gmail_connected %}
+        <span class="badge badge-success">Connected</span>
+        <small>{{ google_email }}</small>
+      {% else %}
+        <span class="badge badge-danger">Not Connected</span>
+        <a href="/settings" class="btn btn-sm">Connect</a>
+      {% endif %}
     </div>
-    <div class="card">
-        <div class="card-icon">📊</div>
-        <div class="card-label">Last Report Status</div>
-        <div class="card-value">
-            {% if last_run %}
-                <span class="badge {% if last_run.status == 'success' %}badge-success{% elif last_run.status == 'failed' %}badge-danger{% else %}badge-warning{% endif %}">
-                    {{ last_run.status.replace('_', ' ').title() }}
-                </span>
-            {% else %}
-                <span class="badge badge-secondary">No reports yet</span>
-            {% endif %}
-        </div>
+  </div>
+  <div class="card">
+    <div class="card-icon">📊</div>
+    <div class="card-label">Last Report Status</div>
+    <div class="card-value">
+      {% if last_run %}
+        <span class="badge {% if last_run.status == 'success' %}badge-success{% elif last_run.status == 'failed' %}badge-danger{% else %}badge-warning{% endif %}">
+          {{ last_run.status.replace('_', ' ').title() }}
+        </span>
+        {% if last_run.report_sent %}<small>Email sent</small>{% endif %}
+      {% else %}
+        <span class="badge badge-secondary">No reports yet</span>
+      {% endif %}
     </div>
-    <div class="card">
-        <div class="card-icon">⏰</div>
-        <div class="card-label">Last Run Time</div>
-        <div class="card-value">
-            {% if last_run and last_run.finished_at %}
-                {{ last_run.finished_at.strftime('%Y-%m-%d %H:%M') }}
-            {% else %}
-                Never
-            {% endif %}
-        </div>
+  </div>
+  <div class="card">
+    <div class="card-icon">⏰</div>
+    <div class="card-label">Last Run Time</div>
+    <div class="card-value">
+      {% if last_run and last_run.finished_at %}
+        {{ last_run.finished_at.strftime('%Y-%m-%d %H:%M') }}
+      {% else %}
+        Never
+      {% endif %}
     </div>
-    <div class="card">
-        <div class="card-icon">📬</div>
-        <div class="card-label">Total Emails Checked</div>
-        <div class="card-value">
-            {% if last_run %}
-                {{ last_run.emails_checked }}
-            {% else %}
-                0
-            {% endif %}
-        </div>
+  </div>
+  <div class="card">
+    <div class="card-icon">📬</div>
+    <div class="card-label">Total Emails Checked</div>
+    <div class="card-value">
+      {% if last_run %}
+        {{ last_run.emails_checked }}
+      {% else %}
+        0
+      {% endif %}
     </div>
-    <div class="card">
-        <div class="card-icon">🔴</div>
-        <div class="card-label">High Priority</div>
-        <div class="card-value">
-            {% if last_run %}
-                {{ last_run.high_priority_count }}
-            {% else %}
-                0
-            {% endif %}
-        </div>
+  </div>
+  <div class="card">
+    <div class="card-icon">🔴</div>
+    <div class="card-label">High Priority</div>
+    <div class="card-value">
+      {% if last_run %}
+        {{ last_run.high_priority_count }}
+      {% else %}
+        0
+      {% endif %}
     </div>
-    <div class="card">
-        <div class="card-icon">💬</div>
-        <div class="card-label">Need Reply</div>
-        <div class="card-value">
-            {% if last_run %}
-                {{ last_run.needs_reply_count }}
-            {% else %}
-                0
-            {% endif %}
-        </div>
+  </div>
+  <div class="card">
+    <div class="card-icon">💬</div>
+    <div class="card-label">Need Reply</div>
+    <div class="card-value">
+      {% if last_run %}
+        {{ last_run.needs_reply_count }}
+      {% else %}
+        0
+      {% endif %}
     </div>
-    <div class="card">
-        <div class="card-icon">🔄</div>
-        <div class="card-label">Follow-ups Needed</div>
-        <div class="card-value">
-            {% if last_run %}
-                {{ last_run.follow_up_count }}
-            {% else %}
-                0
-            {% endif %}
-        </div>
+  </div>
+  <div class="card">
+    <div class="card-icon">🔄</div>
+    <div class="card-label">Follow-ups</div>
+    <div class="card-value">
+      {% if last_run %}
+        {{ last_run.follow_up_count }}
+      {% else %}
+        0
+      {% endif %}
     </div>
-    <div class="card">
-        <div class="card-icon">📅</div>
-        <div class="card-label">Meeting Requests</div>
-        <div class="card-value">
-            {% if last_run %}
-                {{ last_run.meeting_count }}
-            {% else %}
-                0
-            {% endif %}
-        </div>
+  </div>
+  <div class="card">
+    <div class="card-icon">📅</div>
+    <div class="card-label">Meetings</div>
+    <div class="card-value">
+      {% if last_run %}
+        {{ last_run.meeting_count }}
+      {% else %}
+        0
+      {% endif %}
     </div>
-    <div class="card">
-        <div class="card-icon">❌</div>
-        <div class="card-label">Failed Runs</div>
-        <div class="card-value">{{ failed_runs }}</div>
-    </div>
+  </div>
+  <div class="card">
+    <div class="card-icon">❌</div>
+    <div class="card-label">Failed Runs</div>
+    <div class="card-value">{{ failed_runs }}</div>
+  </div>
 </div>
 
 {% if last_run %}
 <div class="section">
+  <div class="section-header">
     <h2>Last Report Summary</h2>
-    <div class="report-actions">
-        <button class="btn btn-primary" onclick="runReport()">🔄 Run Manual Report</button>
-        <a href="/reports/{{ last_run.id }}" class="btn btn-secondary">View Last Report</a>
-    </div>
-    <div id="run-status"></div>
+  </div>
+  <div class="stat-row">
+    <div class="stat-item"><span class="stat-num">{{ last_run.emails_checked }}</span><span class="stat-label">emails</span></div>
+    <div class="stat-item"><span class="stat-num">{{ last_run.high_priority_count }}</span><span class="stat-label">high priority</span></div>
+    <div class="stat-item"><span class="stat-num">{{ last_run.needs_reply_count }}</span><span class="stat-label">need reply</span></div>
+    <div class="stat-item"><span class="stat-num">{{ last_run.follow_up_count }}</span><span class="stat-label">follow-ups</span></div>
+  </div>
+  <div class="action-bar">
+    <button class="btn btn-primary run-report-btn" onclick="startSseRun()">🔄 Run Manual Report</button>
+    <a href="/reports/{{ last_run.id }}" class="btn btn-secondary">View Last Report</a>
+    <a href="/reports" class="btn btn-secondary">All Reports</a>
+  </div>
+  {% include "partials/run_logs_panel.html" %}
 </div>
 {% else %}
 <div class="section">
-    <h2>Get Started</h2>
+  <div class="empty-state">
+    <div class="empty-icon">📊</div>
+    <h3>Get Started</h3>
     <p>Configure your Gmail connection and settings to start receiving daily inbox reports.</p>
-    <a href="/settings" class="btn btn-primary">Go to Settings</a>
+    <div class="action-bar" style="justify-content:center;margin-top:16px;">
+      <a href="/settings" class="btn btn-primary">Go to Settings</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if recent_reports %}
+<div class="section">
+  <div class="section-header">
+    <h2>Recent Reports (Last 7 Days)</h2>
+    <a href="/reports" class="btn btn-sm btn-secondary">View All</a>
+  </div>
+  <div class="chart-bar">
+    {% for r in recent_reports %}
+    <div class="chart-bar-row">
+      <span class="chart-bar-label">{{ r.run_date }}</span>
+      <div class="chart-bar-fill" style="width:{{ (r.emails_checked / max_emails * 100) if max_emails > 0 else 0 }}%"></div>
+      <span class="chart-bar-value">{{ r.emails_checked }}</span>
+    </div>
+    {% endfor %}
+  </div>
 </div>
 {% endif %}
 
 <div class="section">
+  <div class="section-header">
     <h2>Quick Actions</h2>
-    <button class="btn btn-primary" onclick="runReport()">🔄 Run Manual Report</button>
+  </div>
+  <div class="action-bar">
+    <button class="btn btn-primary run-report-btn" onclick="startSseRun()">🔄 Run Manual Report</button>
+    <button class="btn btn-danger" onclick="startSseRun(true)" title="Bypass duplicate check">🔄 Force Re-run</button>
     <a href="/reports" class="btn btn-secondary">View All Reports</a>
+    <a href="/settings" class="btn btn-secondary">Settings</a>
+  </div>
+  {% include "partials/run_logs_panel.html" %}
 </div>
 {% endblock %}
 {% block scripts %}
 <script>
-async function runReport() {
-    const btn = event.target;
-    btn.disabled = true;
-    btn.textContent = 'Running...';
-    const statusDiv = document.getElementById('run-status');
-    statusDiv.innerHTML = '<div class="alert alert-info">Report generation started...</div>';
-    try {
-        const result = await apiFetch('/api/reports/run-now', { method: 'POST' });
-        if (result.status === 'skipped') {
-            statusDiv.innerHTML = `<div class="alert alert-warning">${result.message}</div>`;
-        } else {
-            statusDiv.innerHTML = `<div class="alert alert-success">Status: ${result.status.replace('_', ' ').toUpperCase()} | Emails: ${result.emails_checked}</div>`;
-            setTimeout(() => location.reload(), 1500);
-        }
-    } catch (err) {
-        statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
-    }
-    btn.disabled = false;
-    btn.textContent = '🔄 Run Manual Report';
-}
+  // deduplicate run-logs-panel - hide second one
+  var panels = document.querySelectorAll('#run-logs-panel');
+  if (panels.length > 1) {
+    panels[panels.length - 1].style.display = 'none';
+  }
 </script>
 {% endblock %}

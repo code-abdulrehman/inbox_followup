@@ -4,63 +4,145 @@
 <h1>Report — {{ report.run_date }}</h1>
 
 <div class="section">
-    <div class="cards-grid">
-        <div class="card"><div class="card-label">Status</div><div class="card-value"><span class="badge {% if report.status == 'success' %}badge-success{% elif report.status == 'failed' %}badge-danger{% else %}badge-warning{% endif %}">{{ report.status.replace('_', ' ').title() }}</span></div></div>
-        <div class="card"><div class="card-label">Emails Checked</div><div class="card-value">{{ report.emails_checked }}</div></div>
-        <div class="card"><div class="card-label">High Priority</div><div class="card-value">{{ report.high_priority_count }}</div></div>
-        <div class="card"><div class="card-label">Need Reply</div><div class="card-value">{{ report.needs_reply_count }}</div></div>
-        <div class="card"><div class="card-label">Follow-ups</div><div class="card-value">{{ report.follow_up_count }}</div></div>
-        <div class="card"><div class="card-label">Meetings</div><div class="card-value">{{ report.meeting_count }}</div></div>
-        <div class="card"><div class="card-label">Report Sent</div><div class="card-value">{% if report.report_sent %}✅ Yes{% else %}❌ No{% endif %}</div></div>
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-label">Status</div>
+      <div class="card-value">
+        <span class="badge {% if report.status == 'success' %}badge-success{% elif report.status == 'failed' %}badge-danger{% else %}badge-warning{% endif %}">
+          {{ report.status.replace('_', ' ').title() }}
+        </span>
+      </div>
     </div>
-    {% if report.error_message %}
-    <div class="alert alert-danger">{{ report.error_message }}</div>
+    <div class="card">
+      <div class="card-label">Emails Checked</div>
+      <div class="card-value">{{ report.emails_checked }}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">High Priority</div>
+      <div class="card-value">{{ report.high_priority_count }}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Need Reply</div>
+      <div class="card-value">{{ report.needs_reply_count }}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Follow-ups</div>
+      <div class="card-value">{{ report.follow_up_count }}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Meetings</div>
+      <div class="card-value">{{ report.meeting_count }}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Report Sent</div>
+      <div class="card-value">{% if report.report_sent %}✅ Yes{% else %}❌ No{% endif %}</div>
+    </div>
+  </div>
+
+  {% if report.error_message %}
+  <div class="alert alert-danger">{{ report.error_message }}</div>
+  {% endif %}
+
+  <div class="action-bar">
+    <a href="/reports" class="btn btn-secondary">← Back to Reports</a>
+    {% if report.html_report %}
+    <a href="/reports/{{ report.id }}/html" class="btn btn-secondary" target="_blank">View HTML Report</a>
     {% endif %}
-    <div class="report-actions">
-        <a href="/reports" class="btn btn-secondary">← Back to Reports</a>
-    </div>
+  </div>
 </div>
 
 <div class="section">
-    <h2>Email Analyses</h2>
-    {% if analyses %}
+  <h2>Email Analyses</h2>
+  {% if analyses %}
+  <div class="search-bar">
+    <input type="text" id="analysis-search" placeholder="Search sender, subject, or category..." oninput="filterAnalyses()">
+    <select id="priority-filter" onchange="filterAnalyses()">
+      <option value="">All Priorities</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+  </div>
+  <div class="table-wrapper">
     <table class="table">
-        <thead>
-            <tr>
-                <th>Sender</th>
-                <th>Subject</th>
-                <th>Priority</th>
-                <th>Category</th>
-                <th>Need Reply</th>
-                <th>Meeting</th>
-                <th>Summary</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for a in analyses %}
-            <tr>
-                <td>{{ a.sender or '' }}</td>
-                <td>{{ a.subject or '' }}</td>
-                <td><span class="badge {% if a.priority == 'high' %}badge-danger{% elif a.priority == 'medium' %}badge-warning{% else %}badge-success{% endif %}">{{ a.priority }}</span></td>
-                <td>{{ a.category or '' }}</td>
-                <td>{% if a.needs_reply %}✅{% else %}—{% endif %}</td>
-                <td>{% if a.meeting_detected %}✅{% else %}—{% endif %}</td>
-                <td>{{ a.summary or '' }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
+      <thead>
+        <tr>
+          <th>Sender</th>
+          <th>Subject</th>
+          <th>Priority</th>
+          <th>Category</th>
+          <th>Reply</th>
+          <th>Meeting</th>
+          <th>Links</th>
+          <th>Summary</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in analyses %}
+        <tr class="analysis-row"
+            data-priority="{{ a.priority }}"
+            data-category="{{ a.category or '' }}">
+          <td>{{ a.sender or '' }}</td>
+          <td>{{ a.subject or '' }}</td>
+          <td>
+            <span class="badge {% if a.priority == 'high' %}badge-danger{% elif a.priority == 'medium' %}badge-warning{% else %}badge-success{% endif %}">
+              {{ a.priority }}
+            </span>
+          </td>
+          <td>{{ a.category or '' }}</td>
+          <td>{% if a.needs_reply %}✅{% else %}—{% endif %}</td>
+          <td>{% if a.meeting_detected %}✅{% else %}—{% endif %}</td>
+          <td>
+            {% set links = a.snippet | extract_links %}
+            {% if links %}
+              {% for link in links[:3] %}
+                {% if 'linkedin.com' in link or 'meet.google.com' in link or 'zoom.us' in link or 'teams.microsoft.com' in link or 'calendar' in link or 'calendly' in link %}
+                  <a href="{{ link }}" target="_blank" class="btn btn-sm btn-secondary" style="margin-bottom:2px;">🔗</a>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          </td>
+          <td>{{ a.summary or '' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
-    {% else %}
-    <div class="alert alert-info">No email analyses for this report.</div>
-    {% endif %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📧</div>
+    <h3>No Email Analyses</h3>
+    <p>This report has no analyzed emails.</p>
+  </div>
+  {% endif %}
 </div>
 
 {% if report.html_report %}
 <div class="section">
+  <div class="section-header">
     <h2>HTML Report Preview</h2>
-    <div class="report-preview">
-        <iframe srcdoc="{{ report.html_report | e }}" style="width:100%;height:600px;border:1px solid #e9ecef;border-radius:8px;"></iframe>
-    </div>
+    <a href="/reports/{{ report.id }}/html" class="btn btn-sm btn-secondary" target="_blank">Open Full</a>
+  </div>
+  <div class="report-preview">
+    <iframe srcdoc="{{ report.html_report | e }}" style="width:100%;height:600px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;"></iframe>
+  </div>
 </div>
 {% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+  function filterAnalyses() {
+    var search = document.getElementById('analysis-search').value.toLowerCase();
+    var priorityFilter = document.getElementById('priority-filter').value;
+    var rows = document.querySelectorAll('.analysis-row');
+    rows.forEach(function(row) {
+      var priority = row.dataset.priority;
+      var category = row.dataset.category;
+      var text = row.textContent.toLowerCase();
+      var matchSearch = !search || text.includes(search);
+      var matchPriority = !priorityFilter || priority === priorityFilter;
+      row.style.display = matchSearch && matchPriority ? '' : 'none';
+    });
+  }
+</script>
 {% endblock %}

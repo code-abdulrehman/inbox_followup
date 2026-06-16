@@ -272,7 +272,10 @@ def run_daily_report(
     db: Session,
     settings: Settings,
     force: bool = False,
+    run_id: Optional[str] = None,
 ) -> dict:
+    from app.services.run_logger import add_log
+
     errors = []
     failure_step = None
     emails = []
@@ -285,6 +288,8 @@ def run_daily_report(
     if not force and not allow_override and check_duplicate_report(db, today):
         msg = "Duplicate report: today's report already exists. Enable 'Allow Override' in Settings or use scheduler only."
         logger.warning(msg)
+        if run_id:
+            add_log(run_id, "warning", "duplicate", msg)
         return {"status": "skipped", "message": msg}
 
     report_run = ReportRun(
@@ -295,6 +300,9 @@ def run_daily_report(
     db.add(report_run)
     db.commit()
     db.refresh(report_run)
+
+    if run_id:
+        add_log(run_id, "info", "init", f"Report run #{report_run.id} created for {today}", progress=5)
 
     try:
         app_settings = db.query(AppSettings).first()
@@ -311,6 +319,9 @@ def run_daily_report(
             raise Exception("No Gmail connection found. Connect Gmail first.")
 
         try:
+            if run_id:
+                add_log(run_id, "info", "gmail", "Fetching emails from Gmail...", progress=10)
+
             access_token = gmail_conn.access_token
             if not access_token and gmail_conn.refresh_token:
                 access_token = refresh_access_token(
@@ -371,22 +382,36 @@ def run_daily_report(
             emails = fetch_emails(service, query, app_settings.max_emails)
             report_run.emails_checked = len(emails)
             db.commit()
+
+            if run_id:
+                add_log(run_id, "success", "gmail", f"Fetched {len(emails)} emails", progress=25)
         except Exception as e:
             failure_step = "gmail"
             error_msg = f"Gmail fetch failed: {str(e)}"
             logger.error(error_msg)
             errors.append(error_msg)
+            if run_id:
+                add_log(run_id, "error", "gmail", error_msg, progress=25)
             raise
 
         if emails:
             batch_results = None
             if effective_provider != "none":
+                if run_id:
+                    add_log(run_id, "info", "ai", f"Running AI analysis via {effective_provider}...", progress=30)
                 try:
                     batch_results = batch_analyze_emails(emails, settings, effective_provider)
                     if batch_results:
                         logger.info(f"Batch AI analysis succeeded for {len(batch_results)} emails")
+                        if run_id:
+                            add_log(run_id, "success", "ai", f"AI analyzed {len(batch_results)} emails", progress=60)
                 except Exception as e:
                     logger.warning(f"Batch AI analysis failed: {e}")
+                    if run_id:
+                        add_log(run_id, "warning", "ai", f"AI analysis failed, falling back to rule-based: {str(e)}", progress=40)
+            else:
+                if run_id:
+                    add_log(run_id, "info", "ai", "No AI provider configured, using rule-based analysis", progress=30)
 
             if batch_results:
                 for i, email_data in enumerate(emails):
@@ -422,7 +447,12 @@ def run_daily_report(
                         logger.warning(error_msg)
                         errors.append(error_msg)
             else:
-                for email_data in emails:
+                if effective_provider != "none":
+                    logger.info("Batch AI failed, skipping per-email AI calls — using rule-based fallback")
+                    if run_id:
+                        add_log(run_id, "info", "ai", "Skipping per-email AI calls, using rule-based to avoid rate limits", progress=45)
+                effective_provider = "none"
+                for i, email_data in enumerate(emails):
                     try:
                         ai_result = analyze_email(email_data, settings, include_suggested_replies, effective_provider)
                         analysis = EmailAnalysis(
@@ -453,6 +483,9 @@ def run_daily_report(
                         logger.warning(error_msg)
                         errors.append(error_msg)
 
+        if run_id:
+            add_log(run_id, "info", "report", "Generating report...", progress=70)
+
         db.commit()
         db.refresh(report_run)
 
@@ -481,6 +514,9 @@ def run_daily_report(
         report_run.finished_at = datetime.now(timezone.utc)
         db.commit()
 
+        if run_id:
+            add_log(run_id, "success", "report", f"Report generated: {report_run.emails_checked} emails, {report_run.high_priority_count} high priority", progress=80)
+
         try:
             should_send = (
                 (report_run.status == "success" and app_settings.send_success_report)
@@ -488,6 +524,9 @@ def run_daily_report(
             )
             if should_send and app_settings.recipient_email:
                 from app.services.email_service import send_report_email
+
+                if run_id:
+                    add_log(run_id, "info", "email", "Sending report email...", progress=85)
 
                 send_result = send_report_email(
                     settings=settings,
@@ -499,9 +538,13 @@ def run_daily_report(
                 if send_result.get("success"):
                     report_run.report_sent = True
                     report_run.resend_email_id = send_result.get("email_id")
+                    if run_id:
+                        add_log(run_id, "success", "email", f"Report emailed to {app_settings.recipient_email}", progress=95)
                 else:
                     error_msg = f"Failed to send report: {send_result.get('error', '')}"
                     errors.append(error_msg)
+                    if run_id:
+                        add_log(run_id, "error", "email", error_msg, progress=90)
 
             if not should_send and app_settings.recipient_email:
                 report_run.status = "generated_but_not_sent"
@@ -513,6 +556,8 @@ def run_daily_report(
             logger.error(error_msg)
             errors.append(error_msg)
             report_run.error_message = "; ".join(errors[-3:])
+            if run_id:
+                add_log(run_id, "error", "email", error_msg, progress=90)
             db.commit()
 
     except Exception as e:
@@ -525,6 +570,9 @@ def run_daily_report(
         report_run.error_message = "; ".join(errors[-3:])
         report_run.finished_at = datetime.now(timezone.utc)
         db.commit()
+
+        if run_id:
+            add_log(run_id, "error", failure_step, error_msg, progress=100)
 
         app_settings = db.query(AppSettings).first()
         if app_settings and app_settings.send_failure_report and app_settings.recipient_email:
@@ -544,6 +592,9 @@ def run_daily_report(
                     db.commit()
             except Exception as e2:
                 logger.error(f"Failed to send failure report: {e2}")
+
+    if run_id:
+        add_log(run_id, "success", "complete", f"Report finished: {report_run.status}", progress=100)
 
     return {
         "status": report_run.status,

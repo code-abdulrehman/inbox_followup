@@ -1,7 +1,10 @@
+import json
 import logging
+import threading
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -14,6 +17,7 @@ from app.services.report_service import (
     acquire_job_lock,
     release_job_lock,
 )
+from app.services.run_logger import create_run, cleanup_run, set_run_status, event_stream
 from app.services.scheduler_service import reschedule_job
 from app.services.gmail_service import get_user_email, build_gmail_service, refresh_access_token
 
@@ -108,21 +112,72 @@ async def update_settings(data: SettingsUpdate, db: Session = Depends(get_db)):
     return {"success": True, "settings": {k: getattr(app_settings, k) for k in update_data.keys()}}
 
 
+def _run_report_in_background(run_id: str, force: bool):
+    from app.database import SessionLocal
+    from app.services.run_logger import add_log
+
+    db = SessionLocal()
+    try:
+        add_log(run_id, "info", "init", "Report generation started")
+        if not acquire_job_lock(db):
+            add_log(run_id, "warning", "lock", "A report job is already running")
+            set_run_status(run_id, "skipped")
+            return
+
+        add_log(run_id, "info", "lock", "Job lock acquired", progress=5)
+        result = run_daily_report(db, settings, force=force, run_id=run_id)
+        status = result.get("status", "failed")
+        set_run_status(run_id, status)
+        add_log(run_id, "success", "complete", f"Report finished with status: {status}", progress=100)
+    except Exception as e:
+        logger.error(f"Background run failed: {e}")
+        add_log(run_id, "error", "unknown", f"Report failed: {str(e)}", progress=100)
+        set_run_status(run_id, "failed")
+    finally:
+        release_job_lock(db)
+        db.close()
+
+
 @router.post("/reports/run-now")
 async def run_report_now(
     force: bool = Query(False),
     db: Session = Depends(get_db),
 ):
-    if not acquire_job_lock(db):
-        raise HTTPException(status_code=409, detail="A report job is already running")
+    run_id = create_run()
+
+    thread = threading.Thread(target=_run_report_in_background, args=(run_id, force), daemon=True)
+    thread.start()
+
+    return {"run_id": run_id, "status": "started"}
+
+
+@router.get("/reports/run-now/events/{run_id}")
+async def run_report_events(run_id: str):
+    return StreamingResponse(
+        event_stream(run_id),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.get("/scheduler/test")
+async def test_scheduler():
+    from app.database import SessionLocal
+    from app.services.scheduler_service import run_scheduled_job
+
+    db = SessionLocal()
     try:
-        result = run_daily_report(db, settings, force=force)
-        return result
+        run_scheduled_job(db, settings)
+        return {"status": "ok", "message": "Scheduled job executed"}
     except Exception as e:
-        logger.error(f"Manual run failed: {e}")
+        logger.error(f"Scheduler test failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        release_job_lock(db)
+        db.close()
 
 
 @router.get("/reports")
