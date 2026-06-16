@@ -2,70 +2,95 @@
 {% block title %} — Reports{% endblock %}
 {% block content %}
 <h1>Reports</h1>
+
 <div class="section">
-    <button class="btn btn-primary" onclick="runReport()">🔄 Run Manual Report</button>
-    <div id="run-status"></div>
-</div>
-<div class="section">
-    {% if reports %}
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Emails</th>
-                <th>High Priority</th>
-                <th>Need Reply</th>
-                <th>Meetings</th>
-                <th>Sent</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for report in reports %}
-            <tr>
-                <td>{{ report.run_date }}</td>
-                <td>
-                    <span class="badge {% if report.status == 'success' %}badge-success{% elif report.status == 'failed' %}badge-danger{% elif report.status == 'running' %}badge-info{% else %}badge-warning{% endif %}">
-                        {{ report.status.replace('_', ' ').title() }}
-                    </span>
-                </td>
-                <td>{{ report.emails_checked }}</td>
-                <td>{{ report.high_priority_count }}</td>
-                <td>{{ report.needs_reply_count }}</td>
-                <td>{{ report.meeting_count }}</td>
-                <td>{% if report.report_sent %}✅{% else %}❌{% endif %}</td>
-                <td><a href="/reports/{{ report.id }}" class="btn btn-sm">View</a></td>
-            </tr>
-            {% endfor %}
-        </tbody>
+  <div class="section-header">
+    <h2>All Reports</h2>
+    <button class="btn btn-primary run-report-btn" onclick="startSseRun()">🔄 Run Manual Report</button>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="Search by date or status..." oninput="filterReports()">
+    <select id="status-filter" onchange="filterReports()">
+      <option value="">All Statuses</option>
+      <option value="success">Success</option>
+      <option value="failed">Failed</option>
+      <option value="partial_success">Partial Success</option>
+      <option value="running">Running</option>
+      <option value="generated_but_not_sent">Generated (Not Sent)</option>
+    </select>
+    <input type="date" id="date-from" onchange="filterReports()" title="From date">
+    <input type="date" id="date-to" onchange="filterReports()" title="To date">
+  </div>
+
+  {% include "partials/run_logs_panel.html" %}
+
+  {% if reports %}
+  <div class="table-wrapper">
+    <table class="table" id="reports-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Emails</th>
+          <th>High Priority</th>
+          <th>Need Reply</th>
+          <th>Sent</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for report in reports %}
+        <tr class="report-row"
+            data-date="{{ report.run_date }}"
+            data-status="{{ report.status }}">
+          <td>{{ report.run_date }}</td>
+          <td>
+            <span class="badge {% if report.status == 'success' %}badge-success{% elif report.status == 'failed' %}badge-danger{% elif report.status == 'running' %}badge-info{% else %}badge-warning{% endif %}">
+              {{ report.status.replace('_', ' ').title() }}
+            </span>
+          </td>
+          <td>{{ report.emails_checked }}</td>
+          <td>{{ report.high_priority_count }}</td>
+          <td>{{ report.needs_reply_count }}</td>
+          <td>{% if report.report_sent %}✅{% else %}❌{% endif %}</td>
+          <td><a href="/reports/{{ report.id }}" class="btn btn-sm btn-secondary">View</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
-    {% else %}
-    <div class="alert alert-info">No reports yet. Run a manual report to get started.</div>
-    {% endif %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📋</div>
+    <h3>No Reports Yet</h3>
+    <p>Run a manual report to get started.</p>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
 {% block scripts %}
 <script>
-async function runReport() {
-    const btn = event.target;
-    btn.disabled = true;
-    btn.textContent = 'Running...';
-    const statusDiv = document.getElementById('run-status');
-    statusDiv.innerHTML = '<div class="alert alert-info">Report generation started...</div>';
-    try {
-        const result = await apiFetch('/api/reports/run-now', { method: 'POST' });
-        if (result.status === 'skipped') {
-            statusDiv.innerHTML = `<div class="alert alert-warning">${result.message}</div>`;
-        } else {
-            statusDiv.innerHTML = `<div class="alert alert-success">Status: ${result.status.replace('_', ' ').toUpperCase()} | Emails: ${result.emails_checked}</div>`;
-            setTimeout(() => location.reload(), 1500);
-        }
-    } catch (err) {
-        statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
-    }
-    btn.disabled = false;
-    btn.textContent = '🔄 Run Manual Report';
-}
+  function filterReports() {
+    var search = document.getElementById('search-input').value.toLowerCase();
+    var statusFilter = document.getElementById('status-filter').value;
+    var dateFrom = document.getElementById('date-from').value;
+    var dateTo = document.getElementById('date-to').value;
+    var rows = document.querySelectorAll('.report-row');
+    rows.forEach(function(row) {
+      var date = row.dataset.date;
+      var status = row.dataset.status;
+      var matchSearch = !search || date.includes(search) || status.includes(search);
+      var matchStatus = !statusFilter || status === statusFilter;
+      var matchFrom = !dateFrom || date >= dateFrom;
+      var matchTo = !dateTo || date <= dateTo;
+      row.style.display = matchSearch && matchStatus && matchFrom && matchTo ? '' : 'none';
+    });
+  }
+
+  var panels = document.querySelectorAll('#run-logs-panel');
+  if (panels.length > 1) {
+    panels[panels.length - 1].style.display = 'none';
+  }
 </script>
 {% endblock %}

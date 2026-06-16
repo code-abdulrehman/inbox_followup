@@ -33,16 +33,22 @@ inbox_follow_up/
 │   ├── models.py             # Database models
 │   ├── routes/
 │   │   ├── ui.py             # Dashboard, settings, reports pages
-│   │   ├── api.py            # REST API endpoints
+│   │   ├── api.py            # REST API endpoints (incl. SSE)
 │   │   └── gmail_auth.py     # Gmail OAuth flow
 │   ├── services/
 │   │   ├── gmail_service.py  # Gmail API operations
 │   │   ├── ai_service.py     # AI analysis (NVIDIA/OpenRouter/rule-based)
 │   │   ├── report_service.py # Report generation and orchestration
 │   │   ├── email_service.py  # Resend email sending
-│   │   └── scheduler_service.py  # APScheduler management
-│   ├── templates/            # Jinja2 HTML templates
-│   └── static/               # CSS styles
+│   │   ├── scheduler_service.py  # APScheduler management
+│   │   └── run_logger.py     # SSE log buffer for live run logs
+│   ├── templates/
+│   │   ├── partials/         # Reusable Jinja2 partials
+│   │   └── ... (5 page templates)
+│   └── static/
+│       ├── style.css
+│       ├── css/global.css    # Theme system with dark/light mode
+│       └── js/               # theme.js, toast.js, run-report.js
 ├── .env.example
 ├── requirements.txt
 ├── create_tables.py
@@ -156,6 +162,18 @@ The app generates three formats:
 
 APScheduler runs the report job daily at your configured time. The scheduler auto-starts with the app and auto-updates when settings change.
 
+### Real-Time Run Logs (SSE)
+
+Manual report runs now stream live logs to the dashboard using Server-Sent Events (SSE). You can watch each step:
+- Gmail connection and email fetch
+- AI analysis progress
+- Report generation
+- Email sending
+
+### Dark Mode
+
+Toggle between light and dark themes using the theme button in the navbar. Your preference is saved to localStorage.
+
 ### Job Locking
 
 - Only one report job runs at a time
@@ -197,9 +215,12 @@ curl -X POST "http://localhost:8000/api/reports/run-now?force=true"
 | GET | `/api/gmail/callback` | Gmail OAuth callback |
 | GET | `/api/gmail/status` | Check Gmail connection |
 | POST | `/api/gmail/disconnect` | Disconnect Gmail |
-| POST | `/api/reports/run-now` | Trigger manual report |
+| POST | `/api/reports/run-now` | Trigger manual report (returns run_id for SSE) |
+| GET | `/api/reports/run-now/events/{run_id}` | SSE stream of run logs |
 | GET | `/api/reports` | List all reports |
 | GET | `/api/reports/{id}` | Get report details |
+| GET | `/api/reports/{id}/html` | View raw HTML report |
+| GET | `/api/scheduler/test` | Trigger scheduled job manually |
 
 ## Safety & Privacy
 
@@ -222,10 +243,14 @@ curl -X POST "http://localhost:8000/api/reports/run-now?force=true"
 - [ ] Report generates with correct sections
 - [ ] Report HTML preview renders correctly
 - [ ] Resend sends report email
-- [ ] Manual run button works
+- [ ] Manual run button works with live SSE logs
+- [ ] Dark mode toggle works (persists preference)
+- [ ] Settings tabs work correctly
+- [ ] Report list search/filter works
 - [ ] Scheduler triggers at configured time
 - [ ] Duplicate prevention works
 - [ ] Error states are handled gracefully
+- [ ] HTML report viewer endpoint works
 
 ## Known Limitations
 

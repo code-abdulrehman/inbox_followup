@@ -1,0 +1,11 @@
+<div class="card">
+  {% if icon %}<div class="card-icon">{{ icon }}</div>{% endif %}
+  <div class="card-label">{{ label }}</div>
+  <div class="card-value">
+    {% if badge %}
+      <span class="badge badge-{{ badge.type }}">{{ badge.text }}</span>
+    {% endif %}
+    {{ value }}
+    {% if sub %}<small>{{ sub }}</small>{% endif %}
+  </div>
+</div>

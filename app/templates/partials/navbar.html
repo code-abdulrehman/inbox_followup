@@ -1,0 +1,12 @@
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand">Inbox FollowUp</a>
+    <div class="nav-links">
+      <a href="/" class="{% if request.url.path == '/' %}active{% endif %}">Dashboard</a>
+      <a href="/settings" class="{% if request.url.path == '/settings' %}active{% endif %}">Settings</a>
+      <a href="/reports" class="{% if request.url.path == '/reports' %}active{% endif %}">Reports</a>
+    </div>
+    <div class="nav-spacer"></div>
+    <button id="theme-toggle" class="theme-toggle" title="Toggle theme">🌙</button>
+  </div>
+</nav>

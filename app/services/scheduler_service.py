@@ -15,6 +15,10 @@ scheduler = BackgroundScheduler()
 _job_id = "daily_report_job"
 
 
+def run_scheduled_job(db, settings):
+    run_daily_report(db, settings, force=False)
+
+
 def run_report_job():
     logger.info("Scheduled report job triggered")
     db = SessionLocal()
