@@ -37,7 +37,7 @@ function connectRunLogs(runId, onDone) {
         var entry = document.createElement('div');
         entry.className = 'run-log-entry run-log-' + data.type;
         var ts = data.timestamp ? data.timestamp.slice(11, 19) : '';
-        var icon = data.type === 'info' ? 'ℹ️' : data.type === 'warning' ? '⚠️' : data.type === 'error' ? '❌' : data.type === 'success' ? '✅' : '•';
+        var icon = data.type === 'info' ? iconSVG('info') : data.type === 'warning' ? iconSVG('warning') : data.type === 'error' ? iconSVG('x') : data.type === 'success' ? iconSVG('check') : '';
         entry.innerHTML = '<span class="run-log-time">' + ts + '</span><span class="run-log-icon">' + icon + '</span><span class="run-log-msg">' + escapeHtml(data.message) + '</span>';
         logsDiv.appendChild(entry);
         logsDiv.scrollTop = logsDiv.scrollHeight;
@@ -77,14 +77,14 @@ function startSseRun(force) {
     .then(function (result) {
       if (result.status === 409) {
         showToast(result.data.detail || 'A report is already running', 'warning');
-        if (btn) { btn.disabled = false; btn.textContent = '🔄 Run Manual Report'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = iconSVG('refresh') + ' Run Manual Report'; }
         return;
       }
 
       if (result.data.run_id) {
         connectRunLogs(result.data.run_id, function (status) {
           showToast('Report ' + status.replace('_', ' '), status === 'success' ? 'success' : 'error');
-          if (btn) { btn.disabled = false; btn.textContent = '🔄 Run Manual Report'; }
+          if (btn) { btn.disabled = false; btn.innerHTML = iconSVG('refresh') + ' Run Manual Report'; }
           setTimeout(function () { location.reload(); }, 2000);
         });
         showToast('Report generation started', 'info');
@@ -94,12 +94,12 @@ function startSseRun(force) {
         } else {
           showToast('Status: ' + (result.data.status || 'unknown'), 'info');
         }
-        if (btn) { btn.disabled = false; btn.textContent = '🔄 Run Manual Report'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = iconSVG('refresh') + ' Run Manual Report'; }
         setTimeout(function () { location.reload(); }, 1500);
       }
     })
     .catch(function (err) {
       showToast('Error: ' + err.message, 'error');
-      if (btn) { btn.disabled = false; btn.textContent = '🔄 Run Manual Report'; }
+      if (btn) { btn.disabled = false; btn.innerHTML = iconSVG('refresh') + ' Run Manual Report'; }
     });
 }

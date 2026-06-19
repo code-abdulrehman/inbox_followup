@@ -13,7 +13,7 @@ function showToast(message, type, duration) {
   var toast = document.createElement('div');
   toast.className = 'toast toast-' + type;
 
-  var icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+  var icons = { success: iconSVG('check'), error: iconSVG('x'), warning: iconSVG('warning'), info: iconSVG('info') };
   toast.innerHTML = '<span>' + (icons[type] || '') + '</span> <span>' + message + '</span> <button class="toast-dismiss" onclick="this.parentElement.remove()">×</button>';
 
   container.appendChild(toast);
