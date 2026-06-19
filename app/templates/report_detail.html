@@ -35,7 +35,7 @@
     </div>
     <div class="card">
       <div class="card-label">Report Sent</div>
-      <div class="card-value">{% if report.report_sent %}✅ Yes{% else %}❌ No{% endif %}</div>
+      <div class="card-value">{% if report.report_sent %}{{ icon("check") }} Yes{% else %}{{ icon("x") }} No{% endif %}</div>
     </div>
   </div>
 
@@ -90,14 +90,14 @@
             </span>
           </td>
           <td>{{ a.category or '' }}</td>
-          <td>{% if a.needs_reply %}✅{% else %}—{% endif %}</td>
-          <td>{% if a.meeting_detected %}✅{% else %}—{% endif %}</td>
+          <td>{% if a.needs_reply %}{{ icon("check") }}{% else %}—{% endif %}</td>
+          <td>{% if a.meeting_detected %}{{ icon("check") }}{% else %}—{% endif %}</td>
           <td>
             {% set links = a.snippet | extract_links %}
             {% if links %}
               {% for link in links[:3] %}
                 {% if 'linkedin.com' in link or 'meet.google.com' in link or 'zoom.us' in link or 'teams.microsoft.com' in link or 'calendar' in link or 'calendly' in link %}
-                  <a href="{{ link }}" target="_blank" class="btn btn-sm btn-secondary" style="margin-bottom:2px;">🔗</a>
+                  <a href="{{ link }}" target="_blank" class="btn btn-sm btn-secondary" style="margin-bottom:2px;">{{ icon("link") }}</a>
                 {% endif %}
               {% endfor %}
             {% endif %}
@@ -110,7 +110,7 @@
   </div>
   {% else %}
   <div class="empty-state">
-    <div class="empty-icon">📧</div>
+    <div class="empty-icon">{{ icon("mail") }}</div>
     <h3>No Email Analyses</h3>
     <p>This report has no analyzed emails.</p>
   </div>

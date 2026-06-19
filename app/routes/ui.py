@@ -4,6 +4,7 @@ from datetime import timedelta, datetime
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -22,7 +23,13 @@ def extract_links(text: str) -> list:
     return _URL_RE.findall(text)
 
 
+def svg_icon(name: str, class_name: str = "") -> Markup:
+    cls = f"icon {class_name}".strip()
+    return Markup(f'<svg class="{cls}"><use href="#icon-{name}"/></svg>')
+
+
 templates.env.filters["extract_links"] = extract_links
+templates.env.globals["icon"] = svg_icon
 
 
 @router.get("/", response_class=HTMLResponse)

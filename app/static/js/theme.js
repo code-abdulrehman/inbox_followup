@@ -15,7 +15,7 @@
 
   function updateButton(theme) {
     var btn = document.getElementById('theme-toggle');
-    if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+    if (btn) btn.innerHTML = theme === 'dark' ? iconSVG('sun') : iconSVG('moon');
   }
 
   document.addEventListener('DOMContentLoaded', function () {

@@ -6,7 +6,7 @@
 <div class="section">
   <div class="section-header">
     <h2>All Reports</h2>
-    <button class="btn btn-primary run-report-btn" onclick="startSseRun()">🔄 Run Manual Report</button>
+    <button class="btn btn-primary run-report-btn" onclick="startSseRun()">{{ icon("refresh") }} Run Manual Report</button>
   </div>
 
   <div class="search-bar">
@@ -53,7 +53,7 @@
           <td>{{ report.emails_checked }}</td>
           <td>{{ report.high_priority_count }}</td>
           <td>{{ report.needs_reply_count }}</td>
-          <td>{% if report.report_sent %}✅{% else %}❌{% endif %}</td>
+          <td>{% if report.report_sent %}{{ icon("check") }}{% else %}{{ icon("x") }}{% endif %}</td>
           <td><a href="/reports/{{ report.id }}" class="btn btn-sm btn-secondary">View</a></td>
         </tr>
         {% endfor %}
@@ -62,7 +62,7 @@
   </div>
   {% else %}
   <div class="empty-state">
-    <div class="empty-icon">📋</div>
+    <div class="empty-icon">{{ icon("clipboard") }}</div>
     <h3>No Reports Yet</h3>
     <p>Run a manual report to get started.</p>
   </div>

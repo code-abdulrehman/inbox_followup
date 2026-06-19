@@ -5,7 +5,7 @@
 
 <div class="cards-grid">
   <div class="card">
-    <div class="card-icon">📧</div>
+    <div class="card-icon">{{ icon("mail") }}</div>
     <div class="card-label">Gmail Connection</div>
     <div class="card-value">
       {% if gmail_connected %}
@@ -18,7 +18,7 @@
     </div>
   </div>
   <div class="card">
-    <div class="card-icon">📊</div>
+    <div class="card-icon">{{ icon("chart") }}</div>
     <div class="card-label">Last Report Status</div>
     <div class="card-value">
       {% if last_run %}
@@ -32,7 +32,7 @@
     </div>
   </div>
   <div class="card">
-    <div class="card-icon">⏰</div>
+    <div class="card-icon">{{ icon("clock") }}</div>
     <div class="card-label">Last Run Time</div>
     <div class="card-value">
       {% if last_run and last_run.finished_at %}
@@ -43,7 +43,7 @@
     </div>
   </div>
   <div class="card">
-    <div class="card-icon">📬</div>
+    <div class="card-icon">{{ icon("mail-open") }}</div>
     <div class="card-label">Total Emails Checked</div>
     <div class="card-value">
       {% if last_run %}
@@ -54,7 +54,7 @@
     </div>
   </div>
   <div class="card">
-    <div class="card-icon">🔴</div>
+    <div class="card-icon">{{ icon("alert") }}</div>
     <div class="card-label">High Priority</div>
     <div class="card-value">
       {% if last_run %}
@@ -65,7 +65,7 @@
     </div>
   </div>
   <div class="card">
-    <div class="card-icon">💬</div>
+    <div class="card-icon">{{ icon("chat") }}</div>
     <div class="card-label">Need Reply</div>
     <div class="card-value">
       {% if last_run %}
@@ -76,7 +76,7 @@
     </div>
   </div>
   <div class="card">
-    <div class="card-icon">🔄</div>
+    <div class="card-icon">{{ icon("refresh") }}</div>
     <div class="card-label">Follow-ups</div>
     <div class="card-value">
       {% if last_run %}
@@ -87,7 +87,7 @@
     </div>
   </div>
   <div class="card">
-    <div class="card-icon">📅</div>
+    <div class="card-icon">{{ icon("calendar") }}</div>
     <div class="card-label">Meetings</div>
     <div class="card-value">
       {% if last_run %}
@@ -98,7 +98,7 @@
     </div>
   </div>
   <div class="card">
-    <div class="card-icon">❌</div>
+    <div class="card-icon">{{ icon("x") }}</div>
     <div class="card-label">Failed Runs</div>
     <div class="card-value">{{ failed_runs }}</div>
   </div>
@@ -116,7 +116,7 @@
     <div class="stat-item"><span class="stat-num">{{ last_run.follow_up_count }}</span><span class="stat-label">follow-ups</span></div>
   </div>
   <div class="action-bar">
-    <button class="btn btn-primary run-report-btn" onclick="startSseRun()">🔄 Run Manual Report</button>
+    <button class="btn btn-primary run-report-btn" onclick="startSseRun()">{{ icon("refresh") }} Run Manual Report</button>
     <a href="/reports/{{ last_run.id }}" class="btn btn-secondary">View Last Report</a>
     <a href="/reports" class="btn btn-secondary">All Reports</a>
   </div>
@@ -125,7 +125,7 @@
 {% else %}
 <div class="section">
   <div class="empty-state">
-    <div class="empty-icon">📊</div>
+    <div class="empty-icon">{{ icon("chart") }}</div>
     <h3>Get Started</h3>
     <p>Configure your Gmail connection and settings to start receiving daily inbox reports.</p>
     <div class="action-bar" style="justify-content:center;margin-top:16px;">
@@ -158,8 +158,8 @@
     <h2>Quick Actions</h2>
   </div>
   <div class="action-bar">
-    <button class="btn btn-primary run-report-btn" onclick="startSseRun()">🔄 Run Manual Report</button>
-    <button class="btn btn-danger" onclick="startSseRun(true)" title="Bypass duplicate check">🔄 Force Re-run</button>
+    <button class="btn btn-primary run-report-btn" onclick="startSseRun()">{{ icon("refresh") }} Run Manual Report</button>
+    <button class="btn btn-danger" onclick="startSseRun(true)" title="Bypass duplicate check">{{ icon("refresh") }} Force Re-run</button>
     <a href="/reports" class="btn btn-secondary">View All Reports</a>
     <a href="/settings" class="btn btn-secondary">Settings</a>
   </div>
